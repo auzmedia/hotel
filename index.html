@@ -4,24 +4,20 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Premium VIP Hotel | Landing</title>
-  <!-- Tailwind via CDN + Google Fonts -->
   <script src="https://cdn.tailwindcss.com"></script>
   <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
   <style>
     * { font-family: 'Inter', sans-serif; }
     body { background: #faf9f6; }
-    .gold-gradient { background: linear-gradient(135deg, #d4af37, #f9e28c, #d4af37); }
     .shadow-premium { box-shadow: 0 20px 60px rgba(0,0,0,0.08); }
     .border-gold { border-color: #d4af37; }
     .btn-gold { background: #d4af37; color: #1e1e1e; transition: all 0.2s; }
     .btn-gold:hover { background: #c2a030; transform: scale(0.97); }
-    .bg-dark-soft { background: #1e1e1e; }
     .text-gold { color: #d4af37; }
   </style>
 </head>
 <body>
 
-<!-- PREMIUM VIP LANDING -->
 <div class="max-w-6xl mx-auto px-5 py-8 md:py-12">
 
   <!-- HEADER -->
@@ -132,7 +128,7 @@
     </div>
   </section>
 
-  <!-- ORDER FORM (Landing page orqali buyurtma) -->
+  <!-- ORDER FORM -->
   <section id="order" class="bg-white shadow-premium rounded-3xl p-6 md:p-10 border border-gold/20 mb-16">
     <div class="flex items-center gap-3 mb-6">
       <span class="text-2xl">📋</span>
@@ -143,6 +139,10 @@
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Ism</label>
         <input type="text" id="customerName" placeholder="Ismingiz" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-gold/40 focus:border-gold outline-none transition" required>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Familiya</label>
+        <input type="text" id="customerSurname" placeholder="Familiyangiz" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-gold/40 focus:border-gold outline-none transition">
       </div>
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
@@ -159,6 +159,10 @@
       <div>
         <label class="block text-sm font-medium text-gray-700 mb-1">Kelish sanasi</label>
         <input type="date" id="checkIn" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-gold/40 focus:border-gold outline-none" required>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Ketish sanasi</label>
+        <input type="date" id="checkOut" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-gold/40 focus:border-gold outline-none">
       </div>
       <div class="md:col-span-2">
         <label class="block text-sm font-medium text-gray-700 mb-1">Qo'shimcha so'rov</label>
@@ -182,20 +186,13 @@
 </div>
 
 <!-- ============================================ -->
-<!-- Google Sheets + Telegram bot + App Script     -->
+<!-- HTML (FRONTEND) - FAQAT GOOGLE SHEETS GA YUBORADI -->
 <!-- ============================================ -->
 <script>
   (function() {
-    // ---------- KONFIG ----------
-    // 1) Google Apps Script web app URL (POST qabul qiladi)
-    const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVpKq7XgF5sGQv1Tv0p6WrJ3Lq8N4M7Z2X1Y9A6B5C4D/exec'; 
-    // <-- O'ZINGIZNING APP SCRIPT URL MANZILINI QO'YING (masalan: .../exec)
-    
-    // 2) Telegram Bot token va chat ID (guruh yoki shaxsiy chat)
-    const BOT_TOKEN = '7951234567:AAHp8VqLxRfG5tYkLmN9wQxZ2cVbNmA7fG4';  // <-- BOT TOKEN
-    const CHAT_ID = '-1001234567890'; // <-- GURUH CHAT ID (yoki shaxsiy ID)
+    // App Script URL (backend)
+    const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_yVBihk2XAr7MbXXlDvzjpoBkbs9uz6a5QwvW8L6S0-2cW95T6wDXa8jkVcScPT7Q/exec';
 
-    // ---------- FORM ----------
     const form = document.getElementById('orderForm');
     const feedback = document.getElementById('formFeedback');
 
@@ -204,51 +201,46 @@
       feedback.classList.add('hidden');
       feedback.classList.remove('text-red-500', 'text-green-600');
 
-      // 1) form ma'lumotlarini yig'ish
+      // Ma'lumotlarni yig'ish
       const name = document.getElementById('customerName').value.trim();
+      const surname = document.getElementById('customerSurname').value.trim();
       const phone = document.getElementById('customerPhone').value.trim();
       const room = document.getElementById('roomType').value;
       const checkin = document.getElementById('checkIn').value;
+      const checkout = document.getElementById('checkOut').value;
       const extra = document.getElementById('extraRequest').value.trim();
 
       if (!name || !phone || !checkin) {
-        feedback.textContent = '❗ Iltimos, barcha majburiy maydonlarni toʻldiring.';
+        feedback.textContent = '❗ Iltimos, Ism, Telefon va Kelish sanasini toʻldiring.';
         feedback.classList.remove('hidden');
         feedback.classList.add('text-red-500');
         return;
       }
 
-      // 2) order obyekti
       const orderData = {
-        name,
-        phone,
-        room,
-        checkin,
-        extra: extra || '—',
-        timestamp: new Date().toISOString()
+        name: name,
+        surname: surname || '—',
+        phone: phone,
+        room: room,
+        checkin: checkin,
+        checkout: checkout || '—',
+        extra: extra || '—'
       };
 
-      // 3) Google Sheets ga yuborish (App Script)
       try {
+        // Google Sheets ga yuborish
         const response = await fetch(APP_SCRIPT_URL, {
           method: 'POST',
-          mode: 'no-cors', // CORS muammosini oldini olish
+          mode: 'no-cors',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(orderData)
         });
-        // no-cors da response body bo'lmaydi, lekin yuborildi deb hisoblaymiz
-        console.log('✅ Google Sheets ga yuborildi (no-cors)');
+        console.log('✅ Buyurtma yuborildi');
 
-        // 4) Telegram bot orqali guruhga xabar yuborish
-        await sendTelegramMessage(orderData);
-
-        // 5) UI feedback
         feedback.textContent = '✅ Buyurtma qabul qilindi! Tez orada bog‘lanamiz.';
         feedback.classList.remove('hidden');
         feedback.classList.add('text-green-600');
         form.reset();
-        // sanani tozalash (ixtiyoriy)
-        document.getElementById('checkIn').value = '';
 
       } catch (err) {
         console.error('Xatolik:', err);
@@ -257,42 +249,6 @@
         feedback.classList.add('text-red-500');
       }
     });
-
-    // ---------- TELEGRAM BOT XABAR YUBORISH ----------
-    async function sendTelegramMessage(order) {
-      const text = `🛎️ *YANGI VIP BUYURTMA* 
-      
-👤 *Ism:* ${order.name}
-📞 *Telefon:* ${order.phone}
-🏨 *Xona:* ${order.room}
-📅 *Kelish:* ${order.checkin}
-📝 *So‘rov:* ${order.extra}
-🕒 *Vaqt:* ${new Date(order.timestamp).toLocaleString('uz-UZ')}`;
-
-      const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`;
-      const payload = {
-        chat_id: CHAT_ID,
-        text: text,
-        parse_mode: 'Markdown'
-      };
-
-      try {
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        const data = await res.json();
-        if (data.ok) {
-          console.log('✅ Telegram bot xabar yuborildi');
-        } else {
-          console.warn('⚠️ Telegram xatolik:', data);
-        }
-      } catch (e) {
-        console.error('Telegram bot xatosi:', e);
-        // xatolikni ko'tarmaymiz, faqat konsolga yozamiz
-      }
-    }
   })();
 </script>
 </body>
