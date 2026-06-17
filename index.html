@@ -137,7 +137,7 @@
     </div>
     <form id="orderForm" class="grid md:grid-cols-2 gap-5">
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Ism</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Ism *</label>
         <input type="text" id="customerName" placeholder="Ismingiz" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-gold/40 focus:border-gold outline-none transition" required>
       </div>
       <div>
@@ -145,7 +145,7 @@
         <input type="text" id="customerSurname" placeholder="Familiyangiz" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-gold/40 focus:border-gold outline-none transition">
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Telefon</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Telefon *</label>
         <input type="tel" id="customerPhone" placeholder="+998 90 123 45 67" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-gold/40 focus:border-gold outline-none transition" required>
       </div>
       <div>
@@ -157,7 +157,7 @@
         </select>
       </div>
       <div>
-        <label class="block text-sm font-medium text-gray-700 mb-1">Kelish sanasi</label>
+        <label class="block text-sm font-medium text-gray-700 mb-1">Kelish sanasi *</label>
         <input type="date" id="checkIn" class="w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-gold/40 focus:border-gold outline-none" required>
       </div>
       <div>
@@ -172,10 +172,10 @@
         <button type="submit" class="btn-gold px-10 py-3.5 rounded-full font-bold text-base shadow-lg flex items-center gap-2">
           <span>📩</span> Buyurtma yuborish
         </button>
-        <span class="text-xs text-gray-400">* maʼlumotlar Google Sheets ga yoziladi</span>
+        <span class="text-xs text-gray-400">* majburiy maydonlar</span>
       </div>
     </form>
-    <div id="formFeedback" class="mt-4 text-sm font-medium text-green-600 hidden">✅ Buyurtma qabul qilindi!</div>
+    <div id="formFeedback" class="mt-4 text-sm font-medium hidden"></div>
   </section>
 
   <!-- FOOTER -->
@@ -186,20 +186,22 @@
 </div>
 
 <!-- ============================================ -->
-<!-- HTML (FRONTEND) - FAQAT GOOGLE SHEETS GA YUBORADI -->
+<!-- JAVASCRIPT - FORMA MA'LUMOTLARINI APP SCRIPTGA YUBORADI -->
 <!-- ============================================ -->
 <script>
   (function() {
-    // App Script URL (backend)
-    const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx_yVBihk2XAr7MbXXlDvzjpoBkbs9uz6a5QwvW8L6S0-2cW95T6wDXa8jkVcScPT7Q/exec';
+    // App Script URL (o'zingizning URL ni qo'ying)
+    const APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbzVpKq7XgF5sGQv1Tv0p6WrJ3Lq8N4M7Z2X1Y9A6B5C4D/exec';
 
     const form = document.getElementById('orderForm');
     const feedback = document.getElementById('formFeedback');
 
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      
+      // Feedbackni tozalash
       feedback.classList.add('hidden');
-      feedback.classList.remove('text-red-500', 'text-green-600');
+      feedback.className = 'mt-4 text-sm font-medium hidden';
 
       // Ma'lumotlarni yig'ish
       const name = document.getElementById('customerName').value.trim();
@@ -210,43 +212,66 @@
       const checkout = document.getElementById('checkOut').value;
       const extra = document.getElementById('extraRequest').value.trim();
 
+      // Validatsiya
       if (!name || !phone || !checkin) {
         feedback.textContent = '❗ Iltimos, Ism, Telefon va Kelish sanasini toʻldiring.';
+        feedback.className = 'mt-4 text-sm font-medium text-red-600';
         feedback.classList.remove('hidden');
-        feedback.classList.add('text-red-500');
+        return;
+      }
+
+      // Telefon raqam tekshiruvi (oddiy)
+      if (phone.length < 9) {
+        feedback.textContent = '❗ Iltimos, toʻgʻri telefon raqam kiriting.';
+        feedback.className = 'mt-4 text-sm font-medium text-red-600';
+        feedback.classList.remove('hidden');
         return;
       }
 
       const orderData = {
         name: name,
-        surname: surname || '—',
+        surname: surname || '',
         phone: phone,
         room: room,
         checkin: checkin,
-        checkout: checkout || '—',
-        extra: extra || '—'
+        checkout: checkout || '',
+        extra: extra || ''
       };
 
+      // Yuborish tugmasini bloklash
+      const submitBtn = form.querySelector('button[type="submit"]');
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = '⏳ Yuborilmoqda...';
+
       try {
-        // Google Sheets ga yuborish
+        // App Script ga yuborish
         const response = await fetch(APP_SCRIPT_URL, {
           method: 'POST',
           mode: 'no-cors',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(orderData)
         });
-        console.log('✅ Buyurtma yuborildi');
 
-        feedback.textContent = '✅ Buyurtma qabul qilindi! Tez orada bog‘lanamiz.';
+        // no-cors da response body bo'lmaydi, lekin yuborildi deb hisoblaymiz
+        console.log('✅ Buyurtma yuborildi:', orderData);
+
+        // Muvaffaqiyatli
+        feedback.textContent = '✅ Buyurtma qabul qilindi! Tez orada bogʻlanamiz.';
+        feedback.className = 'mt-4 text-sm font-medium text-green-600';
         feedback.classList.remove('hidden');
-        feedback.classList.add('text-green-600');
+        
+        // Formani tozalash
         form.reset();
 
       } catch (err) {
         console.error('Xatolik:', err);
-        feedback.textContent = '❌ Xatolik yuz berdi. Iltimos qayta urinib ko‘ring.';
+        feedback.textContent = '❌ Xatolik yuz berdi. Iltimos qayta urinib koʻring.';
+        feedback.className = 'mt-4 text-sm font-medium text-red-600';
         feedback.classList.remove('hidden');
-        feedback.classList.add('text-red-500');
+      } finally {
+        // Tugmani qayta faollashtirish
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = '📩 Buyurtma yuborish';
       }
     });
   })();
